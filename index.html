@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proximity App Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        h2 {
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+        }
+        fieldset {
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+        input {
+            margin-right: 10px;
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #222;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Proximity App Test Page</h1>
+
+    <fieldset>
+        <h2>📍 Update Location</h2>
+        <input type="text" id="update_user" placeholder="User ID (e.g., user_c)">
+        <input type="text" id="longitude" placeholder="Longitude (e.g., 88.4000)">
+        <input type="text" id="latitude" placeholder="Latitude (e.g., 22.6000)">
+        <button id="update_btn">Update Location</button>
+    </fieldset>
+
+    <fieldset>
+        <h2>🔍 Find Nearby Users</h2>
+        <input type="text" id="find_user" placeholder="User ID (e.g., user_c)">
+        <input type="text" id="radius" placeholder="Radius in km (e.g., 5)">
+        <button id="find_btn">Find Nearby</button>
+    </fieldset>
+
+    <h3>API Results:</h3>
+    <pre id="results">...</pre>
+
+    <script>
+        // The base URL of your running Python server
+        const API_URL = "http://127.0.0.1:5000";
+
+        // Get references to all our elements
+        const updateBtn = document.getElementById('update_btn');
+        const findBtn = document.getElementById('find_btn');
+        const resultsBox = document.getElementById('results');
+
+        // Helper function to display results
+        function displayResults(data) {
+            resultsBox.textContent = JSON.stringify(data, null, 2);
+        }
+
+        // 1. Attach listener to the "Update Location" button
+        updateBtn.addEventListener('click', async () => {
+            const userId = document.getElementById('update_user').value;
+            const longitude = document.getElementById('longitude').value;
+            const latitude = document.getElementById('latitude').value;
+
+            if (!userId || !longitude || !latitude) {
+                displayResults({ error: "All fields are required for update." });
+                return;
+            }
+
+            const bodyData = {
+                user_id: userId,
+                longitude: parseFloat(longitude),
+                latitude: parseFloat(latitude)
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/update_location`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bodyData)
+                });
+                const data = await response.json();
+                displayResults(data);
+            } catch (err) {
+                displayResults({ error: err.message });
+            }
+        });
+
+        // 2. Attach listener to the "Find Nearby" button
+        findBtn.addEventListener('click', async () => {
+            const userId = document.getElementById('find_user').value;
+            const radius = document.getElementById('radius').value || 5; // Default 5km
+
+            if (!userId) {
+                displayResults({ error: "User ID is required to find others." });
+                return;
+            }
+            
+            // Build the URL with query parameters
+            const params = new URLSearchParams({
+                user_id: userId,
+                radius_km: radius
+            });
+            
+            try {
+                const response = await fetch(`${API_URL}/find_nearby?${params}`);
+                const data = await response.json();
+                displayResults(data);
+            } catch (err) {
+                displayResults({ error: err.message });
+            }
+        });
+    </script>
+
+</body>
+</html>
+  
